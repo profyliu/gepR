@@ -1,11 +1,11 @@
 #' Load gepR.dll
-#' @param dll_file the path and name of the dll file to be loaded.
+#' @param dll_file the path and name of the dll file (or .dylib file) to be loaded.
 gep_load_dll <- function(dll_file = "gepR.dll"){
   dyn.load(dll_file)
 }
 
 #' Unload gepR.dll
-#' @param dll_file the path and name of the dll file to be unloaded.
+#' @param dll_file the path and name of the dll file (or .dylib file) to be unloaded.
 gep_unload_dll <- function(dll_file = "gepR.dll"){
   dyn.unload(dll_file)
 }
@@ -39,26 +39,26 @@ gep_unload_dll <- function(dll_file = "gepR.dll"){
 #'
 gep_train <- function(y,x,px1=0.4,px2=0.1,pm=0.3,maxiter=1000,headlen=5,popsize=100,eliterate=0.1,goal=0.95,
                       rseed=8888,nthreads=4,verbose=1,fit_method=0,maxpass=3,sol_file='gep_sol.dat'){
-
+  
   # Check if DLL is loaded
-  if(!"gepR" %in% names(getLoadedDLLs()))
-    stop("The gepR.dll is not loaded. Use the gep_load_dll() function to load it.")
-
+  if(!("gepR" %in% names(getLoadedDLLs()) || "gepR.dylib" %in% names(getLoadedDLLs())))
+    stop("The gepR.dll (or gepR.dylib) is not loaded. Use the gep_load_dll() function to load it.")
+  
   nrows = length(y)
   dim_x = dim(x)
   if(nrows != dim_x[1])
     stop("Lengths of x and y do not match")
   else
     nvars = dim_x[2]
-
+  
   # A lot of input validity checks are needed here to prevent the DLL from crashing.
   if (any(is.na(y)))
     stop("y contains missing value")
-
+  
   x <- as.double(unlist(x))
   if (any(is.na(x)))
     stop("x contains missing value")
-
+  
   if (!is.numeric(x))
     stop("x must be a numeric vector")
   if (px1 < 0 | px1 > 1)
@@ -85,7 +85,7 @@ gep_train <- function(y,x,px1=0.4,px2=0.1,pm=0.3,maxiter=1000,headlen=5,popsize=
     stop("verbose value is invalid")
   if (fit_method != 0 & fit_method != 1)
     stop("fit_method value is invalid")
-
+  
   gepmod <- .C(getNativeSymbolInfo("gep_run"),
                nrows=as.integer(nrows),
                nvars=as.integer(nvars),
@@ -116,11 +116,11 @@ gep_train <- function(y,x,px1=0.4,px2=0.1,pm=0.3,maxiter=1000,headlen=5,popsize=
 #' @return numeric vector containing the predicted values
 #'
 gep_score <- function(x, sol_file = 'gep_sol.dat'){
-
+  
   # Check if DLL is loaded
-  if(!"gepR" %in% names(getLoadedDLLs()))
-    stop("The gepR.dll is not loaded. Use the gep_load_dll() function to load it.")
-
+  if(!("gepR" %in% names(getLoadedDLLs()) || "gepR.dylib" %in% names(getLoadedDLLs())))
+    stop("The gepR.dll (or gepR.dylib) is not loaded. Use the gep_load_dll() function to load it.")
+  
   y <- rep(0, nrow(x))
   if (any(is.na(x)))
     stop("x contains missing value")
@@ -133,5 +133,3 @@ gep_score <- function(x, sol_file = 'gep_sol.dat'){
   )
   return(score$y)
 }
-
-
